@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Secure Quiz • Random 25 • 80 Minutes</title>
+<style>
+:root {
+  --green:#40B070; --orange:#F09010; --bg1:#0b1220; --bg2:#050814;
+  --card:rgba(255,255,255,.07); --border:rgba(255,255,255,.12);
+  --text:#e5e7eb; --muted:#cbd5e1;
+}
+html,body{height:100%;margin:0;overflow:hidden;background:
+  radial-gradient(1200px 600px at 20% 10%, rgba(64,176,112,.22), transparent 60%),
+  radial-gradient(1000px 700px at 90% 30%, rgba(240,144,16,.18), transparent 55%),
+  linear-gradient(180deg,var(--bg1),var(--bg2));
+  color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+/* No copy/select */
+html, body, .stage, .ui, .card, .opt, .qTitle, .small, .pill, .badge, .p, label, div, span, table, th, td {
+  -webkit-user-select:none!important;-moz-user-select:none!important;-ms-user-select:none!important;user-select:none!important;
+  -webkit-touch-callout:none!important;
+}
+input, textarea, select { -webkit-user-select:text!important; user-select:text!important; }
+
+.wrap{height:100%;display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box;}
+.app{width:min(1200px,100%);}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.badge{background:linear-gradient(90deg, rgba(64,176,112,.35), rgba(240,144,16,.30));border:1px solid var(--border);
+  padding:6px 10px;border-radius:999px;font-weight:900;}
+.pills{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;
+  background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.10);font-size:12px;color:var(--muted);}
+.stage{position:relative;height:min(900px,86vh);background:linear-gradient(180deg, rgba(17,24,39,.82), rgba(17,24,39,.55));
+  border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 22px 60px rgba(0,0,0,.45);}
+canvas{position:absolute;inset:0;width:100%;height:100%;}
+.ui{position:absolute;inset:0;padding:16px;box-sizing:border-box;display:none;overflow:auto;}
+.ui.active{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-top:42px;}
+.h1{font-size:22px;font-weight:900;margin:0 0 6px 0;}
+.p{margin:0 0 10px 0;color:var(--muted);line-height:1.35;}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px;}
+input[type="password"]{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.25);color:var(--text);outline:none;}
+button{cursor:pointer;border:0;border-radius:14px;padding:12px 14px;font-weight:900;}
+.btnPrimary{background:linear-gradient(90deg,var(--green),var(--orange));color:#0b1220;}
+.btnGhost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--text);}
+button:disabled{opacity:.45;cursor:not-allowed;filter:saturate(.7);}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+.opt{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.05);margin:8px 0;}
+.opt.locked{opacity:.80;pointer-events:none;}
+.opt input{margin-top:3px;}
+.opt.correct{background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.45);}
+.opt.wrong{background:rgba(239,68,68,.16);border-color:rgba(239,68,68,.45);}
+.qTitle{font-weight:900;font-size:16px;margin:0 0 8px;white-space:pre-wrap;}
+.small{font-size:12px;color:var(--muted);white-space:pre-wrap;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media (max-width:780px){ .grid2{grid-template-columns:1fr;} }
+.lockscreen{position:absolute;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;}
+.lockscreen.active{display:flex;}
+.lockcard{max-width:780px;width:100%;background:rgba(17,24,39,.95);border:1px solid rgba(239,68,68,.35);border-radius:18px;padding:16px;}
+.warn{color:#fecaca;}
+.inlineTimer{margin-top:8px;display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;
+  background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12);font-size:12px;color:var(--muted);}
+.feedbackRow{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.badgeOk{padding:6px 10px;border-radius:999px;background:rgba(34,197,94,.18);border:1px solid rgba(34,197,94,.45);color:var(--text);font-weight:900;}
+.badgeBad{padding:6px 10px;border-radius:999px;background:rgba(239,68,68,.16);border:1px solid rgba(239,68,68,.45);color:var(--text);font-weight:900;}
+.badgeNeutral{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--muted);font-weight:800;}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="app">
+  <div class="topbar">
+    <div class="badge" id="titleBadge">Secure Quiz • Random 25 • 80 Minutes</div>
+    <div class="pills">
+      <div class="pill" id="timerPill">Total time: --:--</div>
+      <div class="pill" id="metaPill">Not started</div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <canvas id="cv"></canvas>
+
+    <div class="ui active" id="uiCode">
+      <div class="card">
+        <p class="h1">Access Code</p>
+        <p class="p">Type the code and press <b>Enter</b>.</p>
+
+        <form id="codeForm" autocomplete="off">
+          <label>Code</label>
+          <input id="codeInput" type="password" inputmode="numeric" autocomplete="off" placeholder="Enter access code" />
+          <div class="toolbar"><button class="btnPrimary" type="submit">Enter</button></div>
+        </form>
+
+        <div class="small" id="bankInfo">Bank: -- • Attempt: -- • Global time: 80:00</div>
+      </div>
+    </div>
+
+    <div class="ui" id="uiStart">
+      <div class="card">
+        <p class="h1">Instructions</p>
+        <p class="p">
+          • You have <b>80 minutes total</b> for the whole attempt.<br/>
+          • This attempt draws <b>25 random questions</b> from the bank.<br/>
+          • Leaving the tab/window locks the quiz immediately. The current question counts as wrong. Re-enter the code to continue and the quiz advances automatically.
+        </p>
+        <div class="toolbar"><button class="btnPrimary" id="btnStart" type="button">Start</button></div>
+      </div>
+    </div>
+
+    <div class="ui" id="uiQuiz">
+      <div class="card">
+        <div class="toolbar" style="justify-content:space-between;">
+          <div class="pill" id="qPill">Q</div>
+          <div class="pill" id="securityPill">Security: OK</div>
+        </div>
+        <div id="qbox" style="margin-top:10px;"></div>
+        <div class="toolbar">
+          <button class="btnPrimary" id="btnConfirm" type="button">Check answer</button>
+          <button class="btnGhost" id="btnNext" type="button">Next question</button>
+        </div>
+        <div class="small">After checking, your answer is locked. Wrong answers do not reveal the correct option.</div>
+      </div>
+    </div>
+
+    <div class="ui" id="uiResults">
+      <div class="card">
+        <p class="h1">Results</p>
+        <div class="grid2">
+          <div class="card" style="margin-top:0;background:rgba(240,144,16,.08);border-color:rgba(240,144,16,.24)">
+            <p class="h1" style="font-size:18px;margin:0 0 6px;">Final Grade</p>
+            <p class="p" id="finalGrade" style="font-size:22px;font-weight:900;margin:0;"></p>
+            <p class="small" id="finalMeta"></p>
+          </div>
+          <div class="card" style="margin-top:0;">
+            <p class="h1" style="font-size:16px;margin-bottom:8px;">Security Log</p>
+            <div class="small" id="securityLog">No incidents.</div>
+          </div>
+        </div>
+        <div class="toolbar"><button class="btnPrimary" id="btnRestart" type="button">Restart</button></div>
+        <div class="small">Restart requires the access code again.</div>
+      </div>
+    </div>
+
+    <div class="lockscreen" id="lockscreen">
+      <div class="lockcard">
+        <p class="h1 warn">Security Check</p>
+        <p class="p warn" id="lockReason">Re-enter the access code to continue.</p>
+        <label>Access code</label>
+        <input id="resumeCodeInput" type="password" inputmode="numeric" autocomplete="off" placeholder="Enter access code" />
+        <div class="toolbar">
+          <button class="btnPrimary" id="btnResume" type="button">Continue</button>
+          <button class="btnGhost" id="btnCancelLock" type="button">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+
+<script type="application/json" id="bankData">{"access_code": "1991", "sample_size": 25, "total_seconds": 4800, "bank": [{"id": 1, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the active sentence. Choose the correct passive version in the simple present.", "stem": "People sell fresh fruit in this market every morning.", "options": ["Fresh fruit is sold in this market every morning.", "Fresh fruit was sold in this market every morning.", "Fresh fruit sells in this market every morning.", "Fresh fruit is selling in this market every morning."], "answer": 0}, {"id": 2, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the passive sentence. Choose the correct active version in the simple present.", "stem": "The classrooms are cleaned by the janitor every afternoon.", "options": ["The janitor cleans the classrooms every afternoon.", "The janitor cleaned the classrooms every afternoon.", "The classrooms clean the janitor every afternoon.", "The janitor is cleaning the classrooms every afternoon."], "answer": 0}, {"id": 3, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the active sentence. Choose the correct passive version in the simple past.", "stem": "The manager checked the reports yesterday.", "options": ["The reports are checked yesterday.", "The reports checked yesterday.", "The reports were checked yesterday.", "The reports were checking yesterday."], "answer": 2}, {"id": 4, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the passive sentence. Choose the correct active version in the simple past.", "stem": "The invitations were sent by Laura last night.", "options": ["Laura sends the invitations last night.", "Laura sent the invitations last night.", "Laura was sending the invitations last night.", "The invitations sent Laura last night."], "answer": 1}, {"id": 5, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the active sentence. Choose the correct passive version.", "stem": "Teachers use this platform for online classes.", "options": ["This platform used for online classes.", "This platform is used for online classes.", "This platform was used for online classes.", "This platform is using for online classes."], "answer": 1}, {"id": 6, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the passive sentence. Choose the correct active version.", "stem": "English is spoken in many international companies.", "options": ["Many international companies spoke English.", "People speak English in many international companies.", "English speaks in many international companies.", "Many international companies are speaking English yesterday."], "answer": 1}, {"id": 7, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the active sentence. Choose the correct passive version.", "stem": "My grandmother baked a chocolate cake this morning.", "options": ["A chocolate cake was baked this morning.", "A chocolate cake is baked this morning.", "A chocolate cake baked this morning.", "A chocolate cake was baking this morning."], "answer": 0}, {"id": 8, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the passive sentence. Choose the correct active version.", "stem": "The windows were closed by Daniel before the storm.", "options": ["Daniel closes the windows before the storm.", "Daniel was closing the windows before the storm.", "Daniel closed the windows before the storm.", "The windows closed Daniel before the storm."], "answer": 2}, {"id": 9, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the active sentence. Choose the correct passive version in the simple present.", "stem": "People grow coffee in this region.", "options": ["Coffee grows in this region.", "Coffee is grown in this region.", "Coffee was grown in this region.", "Coffee is growing in this region."], "answer": 1}, {"id": 10, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the passive sentence. Choose the correct active version in the simple present.", "stem": "The food is prepared by two cooks every day.", "options": ["Two cooks prepared the food every day.", "Two cooks prepare the food every day.", "Two cooks are preparing the food every day yesterday.", "The food prepares two cooks every day."], "answer": 1}, {"id": 11, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the active sentence. Choose the correct passive version in the simple past.", "stem": "The police arrested the thief last night.", "options": ["The thief is arrested last night.", "The thief was arrested last night.", "The thief arrested last night.", "The thief was arresting last night."], "answer": 1}, {"id": 12, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the passive sentence. Choose the correct active version in the simple past.", "stem": "The emails were answered by the secretary in the morning.", "options": ["The secretary answers the emails in the morning.", "The secretary answered the emails in the morning.", "The secretary is answering the emails in the morning.", "The emails answered the secretary in the morning."], "answer": 1}, {"id": 13, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the active sentence. Choose the correct passive version.", "stem": "Students wear uniforms at this school.", "options": ["Uniforms are worn at this school.", "Uniforms were worn at this school.", "Uniforms wear at this school.", "Uniforms are wearing at this school."], "answer": 0}, {"id": 14, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the passive sentence. Choose the correct active version.", "stem": "The song was played on the radio yesterday afternoon.", "options": ["The radio played the song yesterday afternoon.", "The radio plays the song yesterday afternoon.", "The song played the radio yesterday afternoon.", "The radio is playing the song yesterday afternoon."], "answer": 0}, {"id": 15, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the active sentence. Choose the correct passive version.", "stem": "The company delivers the packages every Friday.", "options": ["The packages delivered every Friday.", "The packages are delivered every Friday.", "The packages were delivered every Friday.", "The packages are delivering every Friday."], "answer": 1}, {"id": 16, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the passive sentence. Choose the correct active version.", "stem": "The bridge was built by local workers in 2008.", "options": ["Local workers build the bridge in 2008.", "Local workers are building the bridge in 2008.", "Local workers built the bridge in 2008.", "The bridge built local workers in 2008."], "answer": 2}, {"id": 17, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the active sentence. Choose the correct passive version.", "stem": "Many students visit the library after class.", "options": ["The library visited after class.", "The library is visited after class.", "The library was visited after class.", "The library is visiting after class."], "answer": 1}, {"id": 18, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the passive sentence. Choose the correct active version.", "stem": "The room was decorated by my friends for the party.", "options": ["My friends decorate the room for the party.", "My friends decorated the room for the party.", "My friends are decorating the room for the party yesterday.", "The room decorated my friends for the party."], "answer": 1}, {"id": 19, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the active sentence. Choose the correct passive version.", "stem": "The doctor examines many patients every day.", "options": ["Many patients are examined every day.", "Many patients were examined every day.", "Many patients examine every day.", "Many patients are examining every day."], "answer": 0}, {"id": 20, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the passive sentence. Choose the correct active version.", "stem": "The final exam was corrected by the teacher last weekend.", "options": ["The teacher corrects the final exam last weekend.", "The teacher corrected the final exam last weekend.", "The teacher was correcting the final exam last weekend.", "The final exam corrected the teacher last weekend.\nSection B. Passive Voice in Context\nComplete the sentence / Conversation (21–40)"], "answer": 1}, {"id": 21, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the situation. Complete the sentence with the correct passive form in the simple present.", "stem": "In this school, all students wear an ID card.\nID cards ___ by all students in this school.", "options": ["are worn", "were worn", "wear", "are wearing"], "answer": 0}, {"id": 22, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the situation. Complete the sentence with the correct passive form in the simple past.", "stem": "Yesterday, the workers painted the walls of the office.\nThe walls of the office ___ yesterday.", "options": ["are painted", "painted", "were painted", "were painting"], "answer": 2}, {"id": 23, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Who checks the homework every Friday?\nB: It ___ by the English teacher.", "options": ["is checked", "was checked", "checks", "checking"], "answer": 0}, {"id": 24, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: What happened to the broken chair?\nB: It ___ by the janitor this morning.", "options": ["repairs", "is repaired", "repaired", "was repaired"], "answer": 3}, {"id": 25, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the situation. Choose the correct passive form.", "stem": "In our town, newspapers deliver the news very early.\nThe news ___ very early in our town.", "options": ["delivers", "is delivered", "was delivered", "is delivering"], "answer": 1}, {"id": 26, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the situation. Choose the correct passive form.", "stem": "Last semester, the university organized a science fair.\nA science fair ___ last semester.", "options": ["is organized", "organized", "was organized", "is organizing"], "answer": 2}, {"id": 27, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Are the classrooms cleaned every day?\nB: Yes, they ___ after the last class.", "options": ["cleaned", "are cleaned", "were cleaned", "cleaning"], "answer": 1}, {"id": 28, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Was the window fixed yesterday?\nB: Yes, it ___ in the afternoon.", "options": ["is fixed", "fixes", "was fixed", "fixing"], "answer": 2}, {"id": 29, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the situation. Complete the sentence with the correct passive form.", "stem": "People produce many cars in this factory.\nMany cars ___ in this factory.", "options": ["are produced", "were produced", "produce", "are producing"], "answer": 0}, {"id": 30, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the situation. Complete the sentence with the correct passive form.", "stem": "The storm damaged several houses last night.\nSeveral houses ___ last night.", "options": ["are damaged", "damaged", "were damaged", "are damaging"], "answer": 2}, {"id": 31, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Why is that room closed?\nB: Because it ___ for an important meeting every Monday.", "options": ["uses", "is used", "was used", "using"], "answer": 1}, {"id": 32, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Where were the documents printed?\nB: They ___ in the main office yesterday morning.", "options": ["are printed", "printed", "were printed", "are printing"], "answer": 2}, {"id": 33, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the situation. Choose the correct passive form.", "stem": "People speak Portuguese in Brazil.\nPortuguese ___ in Brazil.", "options": ["is spoken", "was spoken", "speaks", "is speaking"], "answer": 0}, {"id": 34, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the situation. Choose the correct passive form.", "stem": "Someone stole my backpack at school yesterday.\nMy backpack ___ at school yesterday.", "options": ["is stolen", "stole", "was stolen", "is stealing"], "answer": 2}, {"id": 35, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Is lunch prepared here every day?\nB: Yes, it ___ in the school kitchen.", "options": ["prepares", "is prepared", "was prepared", "preparing"], "answer": 1}, {"id": 36, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Was the email sent before noon?\nB: Yes, it ___ at 11:30.", "options": ["is sent", "sent", "was sent", "is sending"], "answer": 2}, {"id": 37, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the situation. Choose the correct passive form.", "stem": "Many tourists visit this museum every year.\nThis museum ___ by many tourists every year.", "options": ["visits", "is visited", "was visited", "is visiting"], "answer": 1}, {"id": 38, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the situation. Choose the correct passive form.", "stem": "The mechanic repaired my car yesterday.\nMy car ___ yesterday.", "options": ["is repaired", "repaired", "was repaired", "is repairing"], "answer": 2}, {"id": 39, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: How is coffee prepared in your house?\nB: It ___ with hot water and milk.", "options": ["prepares", "is prepared", "was prepared", "preparing"], "answer": 1}, {"id": 40, "type": "mcq", "skill": "Passive Voice", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: What happened to the old bridge?\nB: It ___ in 2015 after a strong earthquake.", "options": ["is destroyed", "destroys", "was destroyed", "destroying\nSection C. Relative Clauses\nCombine the two sentences by inserting the second sentence into the first one after the subject (41–60)"], "answer": 2}, {"id": 41, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The teacher is very patient. She explains the lessons clearly.", "options": ["The teacher who explains the lessons clearly is very patient.", "The teacher which explains the lessons clearly is very patient.", "The teacher where explains the lessons clearly is very patient.", "The teacher when explains the lessons clearly is very patient."], "answer": 0}, {"id": 42, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The boy is my cousin. He won the race yesterday.", "options": ["The boy where won the race yesterday is my cousin.", "The boy who won the race yesterday is my cousin.", "The boy when won the race yesterday is my cousin.", "The boy which won the race yesterday is my cousin."], "answer": 1}, {"id": 43, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The woman works at the bank. She lives next door.", "options": ["The woman who lives next door works at the bank.", "The woman which lives next door works at the bank.", "The woman where lives next door works at the bank.", "The woman when lives next door works at the bank."], "answer": 0}, {"id": 44, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The dog is very friendly. It sleeps in the garden.", "options": ["The dog who sleeps in the garden is very friendly.", "The dog where sleeps in the garden is very friendly.", "The dog which sleeps in the garden is very friendly.", "The dog when sleeps in the garden is very friendly."], "answer": 2}, {"id": 45, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The restaurant is expensive. We had dinner there last Saturday.", "options": ["The restaurant who we had dinner there last Saturday is expensive.", "The restaurant where we had dinner last Saturday is expensive.", "The restaurant which we had dinner there last Saturday is expensive.", "The restaurant when we had dinner last Saturday is expensive."], "answer": 1}, {"id": 46, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The school is very modern. My sister studies there.", "options": ["The school where my sister studies is very modern.", "The school who my sister studies is very modern.", "The school when my sister studies is very modern.", "The school which my sister studies there is very modern."], "answer": 0}, {"id": 47, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The city is very noisy. My uncle works there.", "options": ["The city when my uncle works is very noisy.", "The city who my uncle works is very noisy.", "The city where my uncle works is very noisy.", "The city which my uncle works there is very noisy."], "answer": 2}, {"id": 48, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The park is beautiful. Children play there every afternoon.", "options": ["The park where children play every afternoon is beautiful.", "The park which children play there every afternoon is beautiful.", "The park when children play there every afternoon is beautiful.", "The park who children play there every afternoon is beautiful."], "answer": 0}, {"id": 49, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The day was unforgettable. We met on that day.", "options": ["The day where we met was unforgettable.", "The day who we met was unforgettable.", "The day when we met was unforgettable.", "The day which we met on that day was unforgettable."], "answer": 2}, {"id": 50, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The year was special for my family. My parents got married in that year.", "options": ["The year where my parents got married was special for my family.", "The year which my parents got married in that year was special for my family.", "The year when my parents got married was special for my family.", "The year who my parents got married was special for my family."], "answer": 2}, {"id": 51, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The movie was very funny. We watched it last night.", "options": ["The movie where we watched it last night was very funny.", "The movie who we watched it last night was very funny.", "The movie which we watched last night was very funny.", "The movie when we watched it last night was very funny."], "answer": 2}, {"id": 52, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The book is on the table. I bought it yesterday.", "options": ["The book when I bought it yesterday is on the table.", "The book which I bought yesterday is on the table.", "The book where I bought it yesterday is on the table.", "The book who I bought it yesterday is on the table."], "answer": 1}, {"id": 53, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The computer is new. My father bought it for work.", "options": ["The computer who my father bought it for work is new.", "The computer where my father bought it for work is new.", "The computer which my father bought for work is new.", "The computer when my father bought it for work is new."], "answer": 2}, {"id": 54, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The bicycle is very old. My brother uses it every day.", "options": ["The bicycle which my brother uses every day is very old.", "The bicycle who my brother uses it every day is very old.", "The bicycle where my brother uses it every day is very old.", "The bicycle when my brother uses it every day is very old."], "answer": 0}, {"id": 55, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The doctor is excellent. She treated my mother.", "options": ["The doctor where treated my mother is excellent.", "The doctor which treated my mother is excellent.", "The doctor when treated my mother is excellent.", "The doctor who treated my mother is excellent."], "answer": 3}, {"id": 56, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The student is absent today. He sits near the window.", "options": ["The student who sits near the window is absent today.", "The student which sits near the window is absent today.", "The student where sits near the window is absent today.", "The student when sits near the window is absent today."], "answer": 0}, {"id": 57, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The hospital is very large. My aunt works there.", "options": ["The hospital when my aunt works is very large.", "The hospital where my aunt works is very large.", "The hospital who my aunt works is very large.", "The hospital which my aunt works there is very large."], "answer": 1}, {"id": 58, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The month is usually rainy. We travel in that month.", "options": ["The month where we travel is usually rainy.", "The month who we travel is usually rainy.", "The month when we travel is usually rainy.", "The month which we travel in that month is usually rainy."], "answer": 2}, {"id": 59, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The teacher is absent today. He teaches science.", "options": ["The teacher who teaches science is absent today.", "The teacher when teaches science is absent today.", "The teacher where teaches science is absent today.", "The teacher which teaches science is absent today."], "answer": 0}, {"id": 60, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the two sentences. Combine them correctly by inserting the second sentence into the first one after the subject.", "stem": "The phone is very expensive. I found it online.", "options": ["The phone who I found it online is very expensive.", "The phone which I found online is very expensive.", "The phone where I found it online is very expensive.", "The phone when I found it online is very expensive.\nSection D. Relative Clauses in Context\nComplete the sentence / Conversation (61–80)"], "answer": 1}, {"id": 61, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "The teacher ___ helps us with pronunciation is from Canada.", "options": ["where", "when", "who", "which"], "answer": 2}, {"id": 62, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "The car ___ my father bought last year is very comfortable.", "options": ["who", "which", "where", "when"], "answer": 1}, {"id": 63, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "This is the café ___ we usually have breakfast on Sundays.", "options": ["when", "where", "who", "which"], "answer": 1}, {"id": 64, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "I still remember the day ___ I started university.", "options": ["where", "who", "when", "which"], "answer": 2}, {"id": 65, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Who is the girl ___ is talking to the principal?\nB: She is the class representative.", "options": ["where", "when", "which", "who"], "answer": 3}, {"id": 66, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Is that the laptop ___ you use for your classes?\nB: Yes, it is.", "options": ["who", "which", "where", "when"], "answer": 1}, {"id": 67, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Is this the room ___ the interview takes place?\nB: Yes. Please, come in.", "options": ["who", "which", "where", "when"], "answer": 2}, {"id": 68, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Do you remember the year ___ your family moved to Pasto?\nB: Yes, it was 2019.", "options": ["where", "when", "who", "which"], "answer": 1}, {"id": 69, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "The nurse ___ helped my grandfather was very kind.", "options": ["which", "where", "who", "when"], "answer": 2}, {"id": 70, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "The movie ___ we watched in class was about space.", "options": ["when", "who", "where", "which"], "answer": 3}, {"id": 71, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "The town ___ my grandparents live is very quiet.", "options": ["when", "where", "who", "which"], "answer": 1}, {"id": 72, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "That was the moment ___ everything changed.", "options": ["who", "which", "when", "where"], "answer": 2}, {"id": 73, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Do you know the man ___ works in the library?\nB: Yes, his name is Pablo.", "options": ["where", "who", "when", "which"], "answer": 1}, {"id": 74, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Is this the book ___ your teacher recommended?\nB: Yes, I started reading it yesterday.", "options": ["which", "where", "when", "who"], "answer": 0}, {"id": 75, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Is that the city ___ your brother studies medicine?\nB: Yes, he really likes living there.", "options": ["when", "who", "where", "which"], "answer": 2}, {"id": 76, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the conversation. Choose the best answer.", "stem": "A: Was 2020 the year ___ you finished school?\nB: No, I finished in 2021.", "options": ["where", "which", "when", "who"], "answer": 2}, {"id": 77, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "The student ___ won the English contest received a prize.", "options": ["who", "where", "when", "which"], "answer": 0}, {"id": 78, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "The tablet ___ is on the desk belongs to the coordinator.", "options": ["when", "where", "who", "which"], "answer": 3}, {"id": 79, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "The neighborhood ___ I grew up has changed a lot.", "options": ["where", "when", "who", "which"], "answer": 0}, {"id": 80, "type": "mcq", "skill": "Relative Clauses", "instruction": "Read the sentence. Choose the correct relative word to complete it.", "stem": "Friday is the day ___ we usually have our team meeting.", "options": ["who", "when", "where", "which"], "answer": 1}]}</script>
+
+<script>
+'use strict';
+const DATA = JSON.parse(document.getElementById('bankData').textContent);
+const $ = (id)=>document.getElementById(id);
+
+const uiCode=$("uiCode"), uiStart=$("uiStart"), uiQuiz=$("uiQuiz"), uiResults=$("uiResults");
+const codeInput=$("codeInput"), codeForm=$("codeForm"), btnStart=$("btnStart");
+const timerPill=$("timerPill"), metaPill=$("metaPill"), qPill=$("qPill"), securityPill=$("securityPill");
+const qbox=$("qbox"), btnConfirm=$("btnConfirm"), btnNext=$("btnNext");
+const finalGrade=$("finalGrade"), finalMeta=$("finalMeta"), securityLog=$("securityLog");
+const lockscreen=$("lockscreen"), lockReason=$("lockReason"), resumeCodeInput=$("resumeCodeInput"), btnResume=$("btnResume");
+const btnRestart=$("btnRestart"), btnCancelLock=$("btnCancelLock");
+const bankInfo=$("bankInfo"), titleBadge=$("titleBadge");
+
+// Canvas decoration
+const cv=$("cv"), ctx=cv.getContext("2d");
+function fit(){
+  const r=cv.getBoundingClientRect();
+  const dpr=Math.max(1, window.devicePixelRatio||1);
+  cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+window.addEventListener("resize", fit);
+function draw(){
+  const w=cv.clientWidth, h=cv.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  ctx.globalAlpha=.14; ctx.strokeStyle="rgba(255,255,255,.14)";
+  const step=Math.max(22, Math.floor(Math.min(w,h)/18));
+  for(let x=0;x<w;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+  for(let y=0;y<h;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  ctx.globalAlpha=1;
+  const grad=ctx.createLinearGradient(0,0,w,0);
+  grad.addColorStop(0,"rgba(64,176,112,.22)");
+  grad.addColorStop(1,"rgba(240,144,16,.18)");
+  ctx.fillStyle=grad; ctx.fillRect(0,0,w,Math.max(54,h*0.08));
+  ctx.fillStyle="rgba(255,255,255,.75)";
+  ctx.font="800 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Secure Canvas Assessment", 16, 30);
+  ctx.fillStyle="rgba(255,255,255,.55)";
+  ctx.font="700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Global timer continues during security lock", 16, 48);
+}
+fit();
+
+// Helpers
+function show(el){ [uiCode,uiStart,uiQuiz,uiResults].forEach(x=>x.classList.remove("active")); el.classList.add("active"); }
+function pad2(n){ return n<10?("0"+n):(""+n); }
+function fmt(sec){ const m=Math.floor(sec/60), s=sec%60; return pad2(m)+":"+pad2(s); }
+function setTimer(sec){
+  const txt = (sec==null) ? "Total time: --:--" : ("Total time: "+fmt(sec));
+  timerPill.textContent = txt;
+  const inline=document.getElementById("totalTimerInline");
+  if(inline) inline.textContent = txt;
+}
+function setMeta(t){ metaPill.textContent=t; }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function esc(s){ return (s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+
+// State
+const S={phase:"code", sel:[], idx:0, ans:{}, lock:{}, shuf:{},
+         t:{id:null,left:0}, sec:{started:false,locked:false,inc:[],ignoreUntil:0},
+         score:{correct:0,wrong:0}, restartPending:false};
+
+function clearT(){ if(S.t.id){ clearInterval(S.t.id); S.t.id=null; } }
+function startGlobalT(){
+  clearT();
+  setTimer(S.t.left);
+  S.t.id=setInterval(()=>{
+    if(S.phase!=="quiz") return;
+    S.t.left = Math.max(0, S.t.left-1);
+    setTimer(S.t.left);
+    if(S.t.left===0) finish(true);
+  },1000);
+}
+
+function pick(){
+  const total=DATA.bank.length, needed=Math.min(DATA.sample_size||25, total);
+  const idxs=Array.from({length:total},(_,i)=>i);
+  S.sel=shuffle(idxs).slice(0, needed);
+  S.idx=0; S.ans={}; S.lock={}; S.shuf={}; S.score={correct:0,wrong:0};
+
+  for(const gi of S.sel){
+    const qq=DATA.bank[gi];
+    const perm=shuffle(qq.options.map((_,i)=>i));
+    const newOpts=perm.map(i=>qq.options[i]);
+    const newCorrect=perm.indexOf(Number(qq.answer));
+    S.shuf[String(gi)]={options:newOpts, answer:newCorrect};
+  }
+}
+
+function qNow(){
+  const gi=S.sel[S.idx];
+  const qq=DATA.bank[gi];
+  const sh=S.shuf[String(gi)];
+  return Object.assign({}, qq, {options: sh.options, answer: sh.answer});
+}
+
+function render(){
+  const qq=qNow();
+  const key="q"+S.idx;
+  const locked=!!S.lock[key];
+
+  btnConfirm.disabled = locked;
+  qPill.textContent = "Q "+(S.idx+1)+" / "+S.sel.length+" • "+(qq.skill||"");
+  qbox.innerHTML="";
+  qbox.insertAdjacentHTML("beforeend", '<p class="small">'+esc(qq.instruction)+'</p>');
+  qbox.insertAdjacentHTML("beforeend", '<p class="qTitle">'+esc(qq.stem)+'</p>');
+  qbox.insertAdjacentHTML("beforeend", '<div class="inlineTimer" id="totalTimerInline">Total time: --:--</div>');
+  setTimer(S.t.left);
+
+  const saved=S.ans[key];
+  const chosen=(saved!==undefined && saved!=="__FORCED_WRONG__") ? Number(saved) : null;
+  const group="g_"+key;
+
+  qq.options.forEach((opt,i)=>{
+    const row=document.createElement("label");
+    let extra="";
+    if(locked){
+      // Only color the selected option; do NOT reveal the correct option on wrong
+      if(chosen===i && i===Number(qq.answer)) extra+=" correct";
+      if(chosen===i && i!==Number(qq.answer)) extra+=" wrong";
+    }
+    row.className="opt"+(locked?" locked":"")+extra;
+
+    const r=document.createElement("input");
+    r.type="radio"; r.name=group; r.value=String(i); r.disabled=locked;
+    if(chosen!==null && chosen===i) r.checked=true;
+
+    const span=document.createElement("div");
+    span.innerHTML="<b>"+String.fromCharCode(65+i)+"</b>. "+esc(opt);
+
+    row.appendChild(r); row.appendChild(span);
+    row.addEventListener("click", ()=>{
+      if(S.lock[key]) return;
+      r.checked=true; S.ans[key]=String(i);
+    });
+    qbox.appendChild(row);
+  });
+
+  qbox.insertAdjacentHTML("beforeend",
+    '<div class="feedbackRow">'+
+      '<span class="badgeNeutral" id="badgeResult">Result: —</span>'+
+      '<span class="badgeNeutral" id="badgeCount">Correct: '+S.score.correct+' • Incorrect: '+S.score.wrong+'</span>'+
+    '</div>');
+}
+
+function updateBadges(ok){
+  const badge=document.getElementById("badgeResult");
+  const count=document.getElementById("badgeCount");
+  if(badge){
+    badge.className = ok ? "badgeOk" : "badgeBad";
+    badge.textContent = ok ? "Correct" : "Incorrect";
+  }
+  if(count){ count.textContent = "Correct: "+S.score.correct+" • Incorrect: "+S.score.wrong; }
+}
+
+function confirm(){
+  const qq=qNow();
+  const key="q"+S.idx;
+  if(S.lock[key]) return;
+  if(S.ans[key]===undefined){ alert("Choose an answer first."); return; }
+
+  const chosen=Number(S.ans[key]);
+  const ok = chosen===Number(qq.answer);
+
+  S.lock[key]=true;
+  if(ok) S.score.correct++; else S.score.wrong++;
+
+  render(); updateBadges(ok); setMeta("Saved Q"+(S.idx+1));
+  btnConfirm.disabled=true;
+}
+
+function forceWrong(){
+  const key="q"+S.idx;
+  if(S.lock[key]) return;
+  S.lock[key]=true;
+  S.ans[key]="__FORCED_WRONG__";
+  S.score.wrong++;
+}
+
+function nextQ(){
+  if(S.idx < S.sel.length-1){
+    S.idx++;
+    render();
+    setMeta("In progress");
+  } else finish(false);
+}
+
+function grade(){
+  let correct=0, total=S.sel.length;
+  for(let i=0;i<total;i++){
+    const gi=S.sel[i];
+    const sh=S.shuf[String(gi)];
+    const a=S.ans["q"+i];
+    if(a===undefined || a==="__FORCED_WRONG__") continue;
+    if(Number(a)===Number(sh.answer)) correct++;
+  }
+  const pct = total ? (correct/total) : 0;
+  const g = 1 + 4*pct;
+  return {correct,total,pct,grade:Math.round(g*10)/10};
+}
+
+function finish(timeUp){
+  clearT();
+  const r=grade();
+  finalGrade.textContent=r.grade.toFixed(1)+" / 5.0";
+  finalMeta.textContent="Correct: "+r.correct+" / "+r.total+" • Accuracy: "+Math.round(r.pct*100)+"%"+(timeUp?" • Time up":"");
+  securityLog.textContent=S.sec.inc.length ? S.sec.inc.join("\n") : "No incidents.";
+  S.phase="results";
+  show(uiResults);
+  setMeta("Done");
+}
+
+// Security
+function shouldTrip(){ return S.sec.started && S.phase==="quiz" && !S.sec.locked && Date.now()>=S.sec.ignoreUntil; }
+function logInc(msg){ const t=new Date().toLocaleString(); S.sec.inc.push("["+t+"] "+msg); securityPill.textContent="Security: INCIDENT"; }
+function lock(reason){
+  if(!shouldTrip()) return;
+  S.sec.locked=true;
+  logInc("LOCK: "+reason);
+  forceWrong();
+  lockReason.textContent = reason + " (Question counted as wrong.)";
+  resumeCodeInput.value="";
+  lockscreen.classList.add("active");
+}
+
+function resetToStart(){
+  clearT();
+  S.phase='start';
+  S.sec.started=false; S.sec.locked=false; S.sec.inc=[]; S.sec.ignoreUntil=0;
+  S.sel=[]; S.idx=0; S.ans={}; S.lock={}; S.shuf={}; S.score={correct:0,wrong:0};
+  S.t.left = DATA.total_seconds || 4800;
+  setTimer(S.t.left);
+  codeInput.value=''; resumeCodeInput.value='';
+  securityPill.textContent='Security: OK';
+  setMeta('Ready');
+  lockscreen.classList.remove('active');
+  show(uiStart);
+}
+
+function unlockResume(){
+  const code=resumeCodeInput.value.trim();
+  if(code!==DATA.access_code){ alert("Incorrect code."); resumeCodeInput.value=""; return; }
+  resumeCodeInput.value="";
+  lockscreen.classList.remove("active");
+  if(S.restartPending){
+    S.restartPending=false;
+    resetToStart();
+    return;
+  }
+  S.sec.locked=false;
+  S.sec.ignoreUntil=Date.now()+1200;
+  nextQ();
+}
+
+document.addEventListener("visibilitychange", ()=>{ if(!shouldTrip()) return; if(document.hidden) lock("Tab/window was sent to background."); });
+window.addEventListener("blur", ()=>{ if(!shouldTrip()) return; lock("Window lost focus."); });
+window.addEventListener("pagehide", ()=>{ if(!shouldTrip()) return; lock("Page was hidden (pagehide)."); });
+window.addEventListener("focusout", ()=>{ if(!shouldTrip()) return; if(!document.hasFocus()) lock("Focus moved away from the page."); });
+setInterval(()=>{ if(!shouldTrip()) return; if(document.hidden || !document.hasFocus()) lock("Focus/visibility check failed."); }, 250);
+
+// shortcuts and no copy
+document.addEventListener("keydown", (e)=>{
+  if(S.phase!=="quiz") return;
+  const k=(e.key||"").toLowerCase();
+  const ctrl=e.ctrlKey || e.metaKey;
+  const blocked =
+    (ctrl && ["c","v","x","p","s","u","r","w","t","n","a"].includes(k)) ||
+    (e.key==="F12") ||
+    (ctrl && e.shiftKey && ["i","j","c"].includes(k)) ||
+    (e.key==="PrintScreen") ||
+    (ctrl && e.shiftKey && k==="s") ||
+    (e.metaKey && e.shiftKey && ["3","4","5"].includes(k));
+  if(blocked){ e.preventDefault(); lock("Blocked shortcut / capture attempt detected."); }
+});
+["contextmenu","copy","cut","paste","selectstart","dragstart"].forEach(ev=>{
+  document.addEventListener(ev, (e)=>{ if(S.phase==="quiz" || S.phase==="results") e.preventDefault(); });
+});
+
+// Flow
+function unlockStart(){
+  const code=codeInput.value.trim();
+  if(code!==DATA.access_code){ alert("Incorrect code."); codeInput.value=""; codeInput.focus(); return; }
+  codeInput.value="";
+  show(uiStart);
+  setMeta("Ready");
+}
+
+function startExam(){
+  S.sec.started=true;
+  pick();
+  S.phase="quiz";
+  show(uiQuiz);
+  setMeta("Random "+S.sel.length+" / "+DATA.bank.length);
+  render();
+  startGlobalT();
+}
+
+// Fix: ENTER works via form submit, Start is a click
+codeForm.addEventListener("submit", (e)=>{ e.preventDefault(); unlockStart(); });
+btnStart.addEventListener("click", (e)=>{ e.preventDefault(); startExam(); });
+btnConfirm.addEventListener("click", (e)=>{ e.preventDefault(); confirm(); });
+btnNext.addEventListener("click", (e)=>{ e.preventDefault(); nextQ(); });
+btnResume.addEventListener("click", (e)=>{ e.preventDefault(); unlockResume(); });
+resumeCodeInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter" || e.keyCode===13){ e.preventDefault(); unlockResume(); }});
+
+btnRestart.addEventListener("click", (e)=>{
+  e.preventDefault();
+  S.restartPending=true;
+  lockReason.textContent="Enter the access code to restart the quiz.";
+  resumeCodeInput.value="";
+  lockscreen.classList.add("active");
+  setTimeout(()=>{ try{ resumeCodeInput.focus(); }catch(_){ } },120);
+});
+btnCancelLock.addEventListener("click", (e)=>{
+  e.preventDefault();
+  if(S.restartPending){ S.restartPending=false; lockscreen.classList.remove("active"); return; }
+  lockscreen.classList.remove("active");
+});
+
+// Init labels
+(function(){
+  const bankN = DATA.bank.length;
+  const attempt = Math.min(DATA.sample_size||25, bankN);
+  bankInfo.textContent = "Bank: "+bankN+" • Attempt: "+attempt+" • Global time: 80:00";
+  titleBadge.textContent = "Secure Quiz • Random "+attempt+" • 80 Minutes";
+  S.t.left = DATA.total_seconds || 4800;
+  setTimer(S.t.left);
+  setTimeout(()=>{ try{ codeInput.focus(); }catch(e){} },120);
+})();
+</script>
+</body>
+</html>
